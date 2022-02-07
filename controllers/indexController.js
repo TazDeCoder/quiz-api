@@ -1,6 +1,7 @@
 // Third-party libraries
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
+const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 // Imported models
 const User = require("../models/user");
@@ -25,21 +26,25 @@ const createUser = [
   // Process request after validation and sanitization
   (req, res, next) => {
     const errors = validationResult(req);
-    // Create user object
-    const user = new User({
-      username: req.body.username,
-      password: req.body.password,
-    });
-    // Check for any validation errors
-    if (!errors.isEmpty()) {
-      return res.json({ errors, user });
-    } else {
-      // Data provided is valid. Save user to database
-      user.save((err) => {
-        if (err) return next(err);
-        return res.sendStatus(201);
+    // Hash password
+    bcrypt.hash(req.body.password, 10, (err, hash) => {
+      if (err) return next(err);
+      // Create user object
+      const user = new User({
+        username: req.body.username,
+        password: hash,
       });
-    }
+      // Check for any validation errors
+      if (!errors.isEmpty()) {
+        return res.json({ errors, user });
+      } else {
+        // Data provided is valid. Save user to database
+        user.save((err) => {
+          if (err) return next(err);
+          return res.sendStatus(201);
+        });
+      }
+    });
   },
 ];
 

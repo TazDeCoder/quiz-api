@@ -3,6 +3,7 @@ const LocalStrategy = require("passport-local").Strategy;
 const passportJWT = require("passport-jwt");
 const JWTStrategy = passportJWT.Strategy;
 const ExtractJWT = passportJWT.ExtractJwt;
+const bcrypt = require("bcryptjs");
 
 const User = require("./models/user");
 
@@ -14,9 +15,13 @@ passport.use(
         return done(null, false, {
           message: "Incorrect username",
         });
-      if (user.password !== password)
-        return done(null, false, { message: "Incorrect password" });
-      return done(null, user, { message: "Logged In Successfully" });
+      bcrypt.compare(password, user.password, (err, res) => {
+        if (res) {
+          return done(null, user, { message: "Logged In Successfully" });
+        } else {
+          return done(null, false, { message: "Incorrect password" });
+        }
+      });
     });
   })
 );
