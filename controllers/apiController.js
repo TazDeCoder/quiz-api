@@ -15,7 +15,9 @@ const quizData = function (req, res, next) {
         Quiz.countDocuments({}, callback);
       },
       quizList: function (callback) {
-        Quiz.find({}, "title", callback);
+        Quiz.find({}, "title")
+          .populate("created_by", { username: 1 })
+          .exec(callback);
       },
     },
     function (err, results) {
@@ -49,12 +51,12 @@ const quizCreate = [
   // Validate and sanitise fields
   body("title")
     .trim()
-    .isLength({ min: 1 })
+    .isLength({ min: 1, max: 200 })
     .escape()
     .withMessage("Title must be specified."),
   body("description")
     .trim()
-    .isLength({ min: 1 })
+    .isLength({ min: 1, max: 400 })
     .escape()
     .withMessage("Description must be specified."),
   body("questions.*.prompt").escape(),
@@ -70,7 +72,7 @@ const quizCreate = [
       description: req.body.description,
       questions: req.body.questions,
       types: req.body.types,
-      created_by: req.body.created_by,
+      created_by: req.user._id,
     });
     // Check for any validation errors
     if (!errors.isEmpty()) {
@@ -102,12 +104,12 @@ const quizUpdate = [
   // Validate and sanitise fields
   body("title")
     .trim()
-    .isLength({ min: 1 })
+    .isLength({ min: 1, max: 200 })
     .escape()
     .withMessage("Title must be specified."),
   body("description")
     .trim()
-    .isLength({ min: 1 })
+    .isLength({ min: 1, max: 400 })
     .escape()
     .withMessage("Description must be specified."),
   body("questions.*.prompt").escape(),
@@ -124,26 +126,41 @@ const quizUpdate = [
       description: req.body.description,
       questions: req.body.questions,
       types: req.body.types,
+      created_by: req.user._id,
     });
     // Check for any validation errors
     if (!errors.isEmpty()) {
       return res.sendStatus(400);
     } else {
-      // Data provided is valid. Save quiz to database
-      Quiz.findByIdAndUpdate(req.params.id, quiz, {}, function (err) {
+      Quiz.findById(req.params.id, function (err, thequiz) {
         if (err) return next(err);
-        return res.sendStatus(200);
-      });
+        if (thequiz.created_by.id === req.user.id) {
+          // Data provided is valid. Save quiz to database
+          Quiz.findByIdAndUpdate(req.params.id, quiz, {}, function (err) {
+            if (err) return next(err);
+            return res.sendStatus(200);
+          });
+        } else {
+          return res.sendStatus(401);
+        }
+      }).populate("created_by");
     }
   },
 ];
 
 const quizDelete = function (req, res, next) {
-  // Delete quiz from database
-  Quiz.findByIdAndDelete(req.params.id, function deleteQuiz(err) {
+  Quiz.findById(req.params.id, function (err, thequiz) {
     if (err) return next(err);
-    return res.sendStatus(200);
-  });
+    if (thequiz.created_by.id === req.user.id || req.user.isAdmin) {
+      // Delete quiz from database
+      Quiz.findByIdAndDelete(req.params.id, function deleteQuiz(err) {
+        if (err) return next(err);
+        return res.sendStatus(200);
+      });
+    } else {
+      return res.sendStatus(401);
+    }
+  }).populate("created_by");
 };
 
 module.exports = {
