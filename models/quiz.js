@@ -25,12 +25,14 @@ const QuizSchema = new Schema({
   title: {
     type: String,
     required: true,
-    maxLength: 64,
+    maxLength: 200,
+    required: true,
   },
   description: {
     type: String,
     required: true,
-    maxLength: 128,
+    maxLength: 400,
+    required: true,
   },
   questions: [
     {
