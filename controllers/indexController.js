@@ -11,10 +11,14 @@ const authUser = [
   (req, res) => {
     req.login(req.user, { session: false }, (err) => {
       if (err) res.sendStatus(400);
-      const token = jwt.sign(req.user.toJSON(), "secretkey", {
-        expiresIn: "1h",
-      });
-      return res.json({ token });
+      const accessToken = jwt.sign(
+        req.user.toJSON(),
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+          expiresIn: "1h",
+        }
+      );
+      return res.json({ token: accessToken });
     });
   },
 ];

@@ -9,12 +9,12 @@ const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const apiRouter = require("./routes/api");
 
-const { DATABASE_URL } = require("./config");
+require("dotenv").config();
 
 const app = express();
 
 // Set up mongoose connection
-const mongoDB = DATABASE_URL;
+const mongoDB = process.env.DB_URL;
 mongoose.connect(mongoDB);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
@@ -31,6 +31,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+
+app.use((req, res, next) => {
+  res.append("Access-Control-Allow-Origin", ["*"]);
+  res.append("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE");
+  res.append("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
