@@ -1,4 +1,4 @@
-# Personality Quiz API
+# Quiz API
 
 ## Description
 
