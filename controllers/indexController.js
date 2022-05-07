@@ -13,7 +13,7 @@ const authUser = [
       if (err) res.sendStatus(400);
       const accessToken = jwt.sign(
         req.user.toJSON(),
-        process.env.ACCESS_TOKEN_SECRET,
+        process.env.ACCESS_TOKEN_SECRET || "secretKey",
         {
           expiresIn: "1h",
         }
@@ -25,8 +25,12 @@ const authUser = [
 
 const createUser = [
   // Validate and sanitise fields
-  body("username").trim().isLength({ min: 1 }).escape(),
-  body("password").trim().isLength({ min: 1 }).escape(),
+  body("username")
+    .trim()
+    .isLength({ min: 1 })
+    .isAlphanumeric("en-GB", { ignore: "-_" })
+    .escape(),
+  body("password").trim().isLength({ min: 6 }).isAlphanumeric("en-GB").escape(),
   // Process request after validation and sanitization
   (req, res, next) => {
     const errors = validationResult(req);
@@ -40,7 +44,7 @@ const createUser = [
       });
       // Check for any validation errors
       if (!errors.isEmpty()) {
-        return res.json({ errors, user });
+        return res.status(400).send({ errors, user });
       } else {
         // Data provided is valid. Save user to database
         user.save((err) => {

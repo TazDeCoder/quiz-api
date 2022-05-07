@@ -13,7 +13,7 @@ const apiRouter = require("./routes/api");
 
 const app = express();
 
-const DEV_DB_URI = "mongodb://localhost:27017/testdb-quiz";
+const DEV_DB_URI = "mongodb://localhost:27017/testdb2";
 
 // Set up mongoose connection
 const mongoDB = process.env.MONGODB_URI || DEV_DB_URI;
@@ -38,8 +38,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
   res.append("Access-Control-Allow-Origin", ["*"]);
-  res.append("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE");
-  res.append("Access-Control-Allow-Headers", "Content-Type");
+  res.append("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.append("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
   next();
 });
 
